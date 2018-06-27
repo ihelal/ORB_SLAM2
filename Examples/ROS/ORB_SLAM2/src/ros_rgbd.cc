@@ -35,9 +35,10 @@
 #include"../../../include/System.h"
 #include"../../../include/MapPoint.h"
 
-//#include "sensor_msgs/PointCloud.h"
+
 #include "geometry_msgs/PoseStamped.h"
-//#include "geometry_msgs/Point32.h"
+//#include "sensor_msgs/PointCloud.h"
+
 #include "tf/transform_datatypes.h"
 #include <tf/transform_broadcaster.h>
 
@@ -130,66 +131,41 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
     cv::Mat pose = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
 
 
-    // CAMERA POSE
+    // CAMERA POSE  rviz:  red X  green Y  blue Z
 
     if (pose.empty()) {
             return;
     }
-    // transform into right handed camera frame
-    // tf::Matrix3x3 rh_cameraPose(  - pose.at<float>(0,0),   pose.at<float>(0,1),   pose.at<float>(0,2),
-                                  // - pose.at<float>(1,0),   pose.at<float>(1,1),   pose.at<float>(1,2),
-                                    // pose.at<float>(2,0), - pose.at<float>(2,1), - pose.at<float>(2,2));
+
 
     tf::Matrix3x3 rh_cameraPose(    pose.at<float>(0,0),   pose.at<float>(0,1),   pose.at<float>(0,2),
                                     pose.at<float>(1,0),   pose.at<float>(1,1),   pose.at<float>(1,2),
                                     pose.at<float>(2,0),   pose.at<float>(2,1),   pose.at<float>(2,2));
 
-    tf::Vector3 rh_cameraTranslation( pose.at<float>(0,3),pose.at<float>(1,3), - pose.at<float>(2,3) );
+    tf::Vector3 rh_cameraTranslation( pose.at<float>(0,3),pose.at<float>(1,3), pose.at<float>(2,3) );
 
-    //rotate 270deg about z and 270deg about x
-    // tf::Matrix3x3 rotation270degZX( 0, 0, 1,
-                                   // -1, 0, 0,
-                                    // 0,-1, 0);
-	//red - x green - y blue -z
+
+    tf::Quaternion q_cam, q_rot, q;
+    rh_cameraPose.getRotation(q_cam);
+    
+    double roll=3.14159, pitch=0, yaw=0;  // Rotate the previous pose by 180* about X
+	q_rot = tf::createQuaternionFromRPY(roll, pitch, yaw);
 	
-	// tf::Matrix3x3 rotation270degZX( 1, 0, 0,
-                                    // 0, 0,-1,
-                                    // 0, 1, 0);                                  
-
-    tf::Quaternion q;
-    rh_cameraPose.getRotation(q);
+	q = q_rot*q_cam;  // Calculate the new orientation
+    q.normalize();
+    
     geometry_msgs::PoseStamped p;
     p.header.frame_id = "world";
-    p.pose.position.x = rh_cameraTranslation[0];
-    p.pose.position.y = rh_cameraTranslation[1];
-    p.pose.position.z = rh_cameraTranslation[2];
-    p.pose.orientation.x = q[0];
-    p.pose.orientation.y = q[1];
+    p.pose.position.x = -rh_cameraTranslation[2];
+    p.pose.position.y = rh_cameraTranslation[0];
+    p.pose.position.z = rh_cameraTranslation[1];
+    p.pose.orientation.x = q[1];
+    p.pose.orientation.y = -q[3];
     p.pose.orientation.z = q[2];
-    p.pose.orientation.w = q[3];
+    p.pose.orientation.w = q[0];
 
     pos_pub.publish(p);
 
-    // POINT CLOUD
-    //sensor_msgs::PointCloud cloud;
-    //cloud.header.frame_id = "world";
-    //std::vector<geometry_msgs::Point32> geo_points;
-    //std::vector<ORB_SLAM2::MapPoint*> points = mpSLAM->GetTrackedMapPoints();
-    //cout << points.size() << endl;
-    //for (std::vector<int>::size_type i = 0; i != points.size(); i++) {
-	    //if (points[i]) {
-		    //cv::Mat coords = points[i]->GetWorldPos();
-		    //geometry_msgs::Point32 pt;
-		    //pt.x = coords.at<float>(0);
-		    //pt.y = coords.at<float>(1);
-		    //pt.z = coords.at<float>(2);
-		    //geo_points.push_back(pt);
-	    //} else {
-	    //}
-    //}
-    //cout << geo_points.size() << endl;
-    //cloud.points = geo_points;
-    //cloud_pub.publish(cloud);
 }
 
 
