@@ -1,0 +1,18 @@
+<launch>
+
+  <!-- Launch the astra rectified depth with color -->
+
+	<arg name="skipframes"      default="0"/>
+	<arg name="use_device_time" default="true"/>
+	<param name="/camera/driver/data_skip" value="$(arg skipframes)" />
+	<param name="/camera/driver/use_device_time" value="$(arg use_device_time)" />
+
+	<include file="$(find ORB_SLAM2)/launch/astra_pro_color.launch" >
+		<arg name="auto_exposure"   value="false" />
+		<arg name="auto_white_balance"  value="false" />
+	</include>
+	
+	<node name="RGBD" pkg="ORB_SLAM2" type="RGBD" args="$(find ORB_SLAM2)/ORBvoc.txt $(find ORB_SLAM2)/astraprosettings.yaml"
+		required="true" />
+
+</launch>
