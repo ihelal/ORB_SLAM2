@@ -179,8 +179,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 
 	tf::Quaternion tfqt;
 	tf3d.getRotation(tfqt);
-
-	tf::Quaternion t(tfqt[2], tfqt[0], tfqt[1], tfqt[3] ); // swap xyzw for zxyw
+	tf::Quaternion rotation(tfqt[2], tfqt[0], tfqt[1], tfqt[3] ); // swap xyzw for zxyw
 
 //	tf3d = tf3d.inverse();
 //	tfqt *= tf::createQuaternionFromRPY(3.14159, 0, 0);
@@ -190,10 +189,11 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 	tf::Vector3 origin;
 //	origin.setValue( pose.at<float>(0,3),pose.at<float>(1,3), pose.at<float>(2,3) );
 	origin.setValue( -pose.at<float>(2,3),pose.at<float>(0,3), pose.at<float>(1,3) ); // swap xyz for -zxy
-	// TODO: this vector needs to be rotated!
+	
+	origin = tf::quatRotate(rotation, origin); // location rotation by orientation angles required
 
 	tf::Transform transform;
-	transform.setRotation(t);
+	transform.setRotation(rotation);
 	transform.setOrigin(origin);
 	
 	static tf::TransformBroadcaster br;
