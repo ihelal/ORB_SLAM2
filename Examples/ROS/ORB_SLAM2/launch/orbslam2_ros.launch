@@ -8,6 +8,9 @@
 	<param name="/camera/driver/use_device_time" value="$(arg use_device_time)" />
 
 	<include file="$(find ORB_SLAM2)/launch/astra_pro_color.launch" >
+<!--
+	<include file="$(find ORB_SLAM2)/launch/astra_mini.launch" >
+-->
 		<arg name="auto_exposure"   value="false" />
 		<arg name="auto_white_balance"  value="false" />
 	</include>

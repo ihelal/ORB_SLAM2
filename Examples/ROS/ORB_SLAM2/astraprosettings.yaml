@@ -1,5 +1,7 @@
 %YAML:1.0
 
+# astra_pro_C18042530457 orbbec
+
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------
@@ -10,17 +12,15 @@
 #[0.142541, -0.248887, -0.005254, -0.005417, 0.000000]
 #[601.297122, 0.000000, 301.703751, 0.000000, 603.168193, 259.075979, 0.000000, 0.000000, 1.000000]
 #[0.125148, -0.127946, 0.010907, -0.013849, 0.000000]
-#[529.411934, 0.000000, 316.272069, 0.000000, 530.591063, 239.575586, 0.000000, 0.000000, 1.000000]
-#[0.017802, -0.089449, 0.003596, 0.004143, 0.000000]
-Camera.fx: 529.411934
-Camera.fy: 530.591063
-Camera.cx: 316.272069
-Camera.cy: 239.575586
+Camera.fx: 601.297122
+Camera.fy: 603.168193
+Camera.cx: 301.703751
+Camera.cy: 259.075979
 
-Camera.k1: 0.017802
-Camera.k2: -0.089449
-Camera.p1: 0.003596
-Camera.p2: 0.004143
+Camera.k1: 0.125148
+Camera.k2: -0.127946
+Camera.p1: 0.010907
+Camera.p2: -0.013849
 Camera.k3: 0.000000
 
 Camera.width: 640
@@ -29,8 +29,8 @@ Camera.height: 480
 # Camera frames per second 
 Camera.fps: 30.0
 
-# IR projector baseline times fx (aprox.) (55mm baseline for astra mini)
-Camera.bf: 29.1
+# IR projector baseline times fx (aprox.)
+Camera.bf: 45.1
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1

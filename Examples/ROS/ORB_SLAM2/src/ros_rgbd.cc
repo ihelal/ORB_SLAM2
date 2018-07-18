@@ -34,6 +34,7 @@
 
 #include"../../../include/System.h"
 #include"../../../include/MapPoint.h"
+#include "../../../include/Converter.h"
 
 
 #include "geometry_msgs/PoseStamped.h"
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
     ImageGrabber igb(&SLAM);
 
     ros::NodeHandle nh;
-    ros::Rate loop_rate(30);
+    // ros::Rate loop_rate(30);
 
     message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/camera/rgb/image_raw", 1);
     message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "camera/depth_registered/image_raw", 1);
@@ -85,13 +86,12 @@ int main(int argc, char **argv)
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));
 
 
-    while (ros::ok()) {
-	    // Spin
-	    ros::spinOnce();
-
-	    // Sleep
-	    loop_rate.sleep();
-    }
+    // while (ros::ok()) {
+	    // ros::spinOnce();
+	    // loop_rate.sleep();
+    // }
+    
+    ros::spin();
 
     // Stop all threads
     SLAM.Shutdown();
@@ -131,12 +131,13 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 
     cv::Mat pose = mpSLAM->TrackRGBD(cv_ptrRGB->image,cv_ptrD->image,cv_ptrRGB->header.stamp.toSec());
 
-
-    // CAMERA POSE  rviz:  red X  green Y  blue Z
-
     if (pose.empty()) {
             return;
     }
+    
+    // CAMERA POSE  rviz:  red X  green Y  blue Z
+
+
 
     /*
     tf::Matrix3x3 rh_cameraPose(    pose.at<float>(0,0),   pose.at<float>(0,1),   pose.at<float>(0,2),
@@ -171,6 +172,9 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 	
 	//===================1.5708 3.14159
 	
+	// almost works
+	/*
+	
 	// rotation
 	tf::Matrix3x3 tf3d;
 	tf3d.setValue(  pose.at<float>(0,0),   pose.at<float>(0,1),   pose.at<float>(0,2),
@@ -198,5 +202,23 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr& msgRGB,const senso
 	
 	static tf::TransformBroadcaster br;
 	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "camera_pose"));
+	
+	*/
 
+
+    cv::Mat Rwc = pose.rowRange(0,3).colRange(0,3).t();
+    cv::Mat twc = -Rwc*pose.rowRange(0,3).col(3);
+
+    vector<float> q = ORB_SLAM2::Converter::toQuaternion(Rwc);
+
+    const float MAP_SCALE = 1.0f;
+
+    static tf::TransformBroadcaster br;
+
+    tf::Transform transform;
+    transform.setOrigin(tf::Vector3(twc.at<float>(0, 0) * MAP_SCALE, twc.at<float>(0, 1) * MAP_SCALE, twc.at<float>(0, 2) * MAP_SCALE));
+    tf::Quaternion tf_quaternion(q[0], q[1], q[2], q[3]);
+    transform.setRotation(tf_quaternion);
+
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "camera_pose"));
 }
